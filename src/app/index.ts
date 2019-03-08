@@ -261,9 +261,9 @@ module.exports = yo.extend({
     }
   },
 
-  _copyProjectFiles()
+  _copyProjectFiles:function ()
   {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         let language = this.project.scriptType === typescript ? 'ts' : 'js';
         const starterCode = generateStarterCode(this.project.host);
@@ -273,20 +273,17 @@ module.exports = yo.extend({
 
         this._projectCreationMessage();
 
-        // Copy project template files from project repository (currently only custom functions has its own separate repo)
-        if (projectRepoBranchInfo.repo)
+        // If project type is React use create-react-app to generate project and then copy over customized files from project repo
+        if (this.project.projectType === 'react')
         {
-          git().clone(projectRepoBranchInfo.repo, this.destinationPath(), ['--branch', projectRepoBranchInfo.branch || 'master'], async (err) => {
-            // modify manifest guid and DisplayName
-            await modifyManifestFile(`${this.destinationPath()}/manifest.xml`, 'random', `${this.project.name}`);
-            
-            // delete the .git folder after cloning over repo
-            const gitFolder = path.join(this.destinationPath(), '.git');
-            if (fs.existsSync(gitFolder)){
-              helperMethods.deleteFolderRecursively(gitFolder);
-            }
-            return err ? reject(err) : resolve();
-          });
+          const reactAppCreated = await helperMethods.createReactApp(this.destinationPath());
+          if (reactAppCreated) {
+            const copyRepoFilesSucceded = await helperMethods.copyRepoFiles(this.destinationPath());
+            copyRepoFilesSucceded ? resolve() : reject();
+          }
+          else {
+            reject();
+          }
         }
         else
         {

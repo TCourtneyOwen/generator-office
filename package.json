@@ -40,7 +40,9 @@
   "dependencies": {
     "applicationinsights": "^0.18.0",
     "chalk": "^1.1.3",
+    "create-react-app": "^2.1.8",
     "lodash": "^4.17.11",
+    "node-wget": "^0.4.3",
     "office-addin-manifest": "^1.2.0",
     "opn": "^4.0.2",
     "rimraf": "^2.6.2",
