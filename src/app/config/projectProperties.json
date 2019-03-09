@@ -22,10 +22,31 @@
             "displayname": "Office Add-in Task Pane project using React framework",
             "templates": {
                 "javascript": {
-                    "repository": "https://github.com/OfficeDev/Office-Addin-TaskPane-React-JS"},
+                    "repository": "https://github.com/OfficeDev/Office-Addin-TaskPane-React-JS",
+                    "copyfiles": {
+                        "manifest": {
+                            "path": "manifest.xml"},
+                        "package.json": {
+                            "path": "package.json"},
+                        "index.js": {
+                            "path": "src/taskpane/index.js"}
+                    }
+                },
                 "typescript": {
-                    "repository": "https://github.com/OfficeDev/Office-Addin-TaskPane-React"}
+                    "repository": "https://github.com/OfficeDev/Office-Addin-TaskPane-React",
+                    "copyfiles": {
+                        "manifest": {
+                            "path": "manifest.xml"
+                        },
+                        "package.json": {
+                            "path": "package.json"
+                        },
+                        "index.js": {
+                            "path": "src/taskpane/index.ts"
+                        }
+                    }
                 }
+            }
         },
         "manifest": {
             "displayname": "Office Add-in project containing the manifest only",

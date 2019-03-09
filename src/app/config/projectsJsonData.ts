@@ -88,4 +88,13 @@ export default class projectsJsonData{
       
       return repoBranchInfo;
     }
+
+    getCopyFiles(projectTypeKey: string, scriptType: string) {
+      let copyFiles = [];
+
+      for (var file in this.m_projectJsonData.projectTypes[projectTypeKey].templates[scriptType].copyfiles){
+        copyFiles.push(file);
+      }
+      return copyFiles;
+    }
   }

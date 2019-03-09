@@ -232,7 +232,7 @@ module.exports = yo.extend({
 
   _copyProjectFiles()
   {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       try {
         let language = this.project.scriptType === typescript ? 'ts' : 'js';
         let jsonData = new projectsJsonData(this.templatePath());
@@ -244,17 +244,37 @@ module.exports = yo.extend({
         // Copy project template files from project repository (currently only custom functions has its own separate repo)
         if (projectRepoBranchInfo.repo)
         {
-          git().clone(projectRepoBranchInfo.repo, this.destinationPath(), ['--branch', projectRepoBranchInfo.branch || 'master'], async (err) => {
-            // modify manifest guid and DisplayName
-            await modifyManifestFile(`${this.destinationPath()}/manifest.xml`, 'random', `${this.project.name}`);
-            
-            // delete the .git folder after cloning over repo
-            const gitFolder = path.join(this.destinationPath(), '.git');
-            if (fs.existsSync(gitFolder)){
-              helperMethods.deleteFolderRecursively(gitFolder);
+          // If project type is React use create-react-app to generate project and then copy over customized files from project repo
+          if (this.project.projectType === 'react-taskpane') {
+            const reactAppCreated = await helperMethods.createReactApp(this.destinationPath());
+
+            if (reactAppCreated) {
+              let copyRepoFilesSucceded = false;
+              const copyFiles = jsonData.getCopyFiles(this.project.projectType, language);
+
+              for (var file in copyFiles)
+              {
+                copyRepoFilesSucceded = await helperMethods.copyRepoFiles(projectRepoBranchInfo.repo, file, this.destinationPath());
+              }
+
+              copyRepoFilesSucceded ? resolve() : reject();
             }
-            return err ? reject(err) : resolve();
-          });
+            else {
+              reject();
+            }
+          } else {
+            git().clone(projectRepoBranchInfo.repo, this.destinationPath(), ['--branch', projectRepoBranchInfo.branch || 'master'], async (err) => {
+              // modify manifest guid and DisplayName
+              await modifyManifestFile(`${this.destinationPath()}/manifest.xml`, 'random', `${this.project.name}`);
+
+              // delete the .git folder after cloning over repo
+              const gitFolder = path.join(this.destinationPath(), '.git');
+              if (fs.existsSync(gitFolder)) {
+                helperMethods.deleteFolderRecursively(gitFolder);
+              }
+              return err ? reject(err) : resolve();
+            });
+          }
         }
         else
         {
