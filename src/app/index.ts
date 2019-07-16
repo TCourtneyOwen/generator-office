@@ -23,7 +23,7 @@ const telemetryObject = {
   telemetryType: telemetry.telemetryType.applicationinsights,
   testData: false
 }
-const addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
+let addInTelemetry : telemetry.OfficeAddinTelemetry;
 
 let insight = appInsights.getClient('1ced6a2f-b3b2-4da5-a1b8-746512fbc840');
 const childProcessExec = promisify(childProcess.exec);
@@ -88,6 +88,7 @@ module.exports = yo.extend({
     }
     let message = `Welcome to the ${chalk.bold.green('Office Add-in')} generator, by ${chalk.bold.green('@OfficeDev')}! Let\'s create a project together!`;
     this.log(yosay(message));
+    addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
     this.project = {};
   },
 
