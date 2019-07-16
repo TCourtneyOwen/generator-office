@@ -88,13 +88,31 @@ module.exports = yo.extend({
     }
     let message = `Welcome to the ${chalk.bold.green('Office Add-in')} generator, by ${chalk.bold.green('@OfficeDev')}! Let\'s create a project together!`;
     this.log(yosay(message));
-    addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
     this.project = {};
   },
 
   /* Prompt user for project options */
   prompting: async function () {
     try {
+      const promptForTelemetry = telemetry.promptForTelemetry("generator-office");
+      let askForSendTelemetry = [
+        {
+          name: 'telemetryOptIn',
+          message: 'Do you want to send telemetry data to help improve Yo Office',
+          type: 'list',
+          default: 'Yes',
+          choices: ["Yes", "No"],
+          when: telemetry.promptForTelemetry("generator-office")
+        }
+      ];
+
+      let answerForSendTelemetry = await this.prompt(askForSendTelemetry);
+
+      if (answerForSendTelemetry.telemetryOptIn == "No") {
+        telemetryObject.telemetryEnabled = false;
+      }
+      addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
+
       let jsonData = new projectsJsonData(this.templatePath());
       let isManifestProject = false;
       let isExcelFunctionsProject = false;
