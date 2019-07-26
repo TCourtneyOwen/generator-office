@@ -13,10 +13,16 @@ import * as yo from 'yeoman-generator';
 import projectsJsonData from './config/projectsJsonData';
 import { helperMethods } from './helpers/helperMethods';
 import { modifyManifestFile } from 'office-addin-manifest';
+import * as path from "path";
+import * as os from "os";
 
 import * as telemetry from "./../../node_modules/office-addin-telemetry/lib/officeAddinTelemetry";
-const telemetryObject = {
+import * as telemetryJsonData from "./../../node_modules/office-addin-telemetry/lib/telemetryJsonData";
+const telemetryObject: telemetry.ITelemetryObject = {
   groupName: "generator-office",
+  telemetryJsonFilePath: undefined,
+  projectName: "generator-office",
+  raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
   promptQuestion: "-----------------------------------------\nDo you want to opt-in for telemetry?[y/n]\n-----------------------------------------",
   telemetryEnabled: true,
@@ -24,6 +30,7 @@ const telemetryObject = {
   testData: false
 }
 let addInTelemetry : telemetry.OfficeAddinTelemetry;
+const telemetryJsonFilePath: string = path.join(os.homedir(), "/officeAddinTelemetry.json");
 
 let insight = appInsights.getClient('1ced6a2f-b3b2-4da5-a1b8-746512fbc840');
 const childProcessExec = promisify(childProcess.exec);
@@ -94,7 +101,7 @@ module.exports = yo.extend({
   /* Prompt user for project options */
   prompting: async function () {
     try {
-      const promptForTelemetry = telemetry.promptForTelemetry("generator-office");
+      // const promptForTelemetry = telemetry.promptForTelemetry("generator-office");
       let askForSendTelemetry = [
         {
           name: 'telemetryOptIn',
@@ -102,11 +109,17 @@ module.exports = yo.extend({
           type: 'list',
           default: 'Yes',
           choices: ["Yes", "No"],
-          when: telemetry.promptForTelemetry("generator-office")
+          when: telemetryJsonData.promptForTelemetry("generator-office", telemetryJsonFilePath)
         }
       ];
 
       let answerForSendTelemetry = await this.prompt(askForSendTelemetry);
+      if (answerForSendTelemetry.telemetryOptIn) {
+        const jsonData = telemetryJsonData.readTelemetryJsonData(telemetryJsonFilePath);
+        jsonData.telemetryInstances[telemetryObject.groupName] = { telemetryEnabled: true };
+        telemetryJsonData.writeTelemetryJsonData(jsonData, telemetryJsonFilePath);
+      }
+
 
       if (answerForSendTelemetry.telemetryOptIn == "No") {
         telemetryObject.telemetryEnabled = false;
