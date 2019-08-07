@@ -24,8 +24,8 @@ const telemetryObject: telemetry.ITelemetryObject = {
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
-  promptQuestion: "-----------------------------------------\nDo you want to opt-in for telemetry?[y/n]\n-----------------------------------------",
-  telemetryEnabled: true,
+  promptQuestion: `Yo Office collects diagnostic and usage data to help understand and improve your user experience.  See details at https://aka.ms/yoofficetelemetry.  If you would like to turn telemetry collection off, run ${chalk.bold.green('yo office --telemetry-off')}\n\n`,
+  telemetryLevel: telemetry.telemetryLevel.verbose,
   telemetryType: telemetry.telemetryType.applicationinsights,
   testData: false
 }
@@ -80,6 +80,12 @@ module.exports = yo.extend({
       desc: 'Use the prerelease version of the project template.'
     });
 
+    this.option('telemetry-off', {
+      type: Boolean,
+      required: false,
+      desc: 'Turn telemetry collection off.'
+    });
+
     this.option('details', {
       alias: 'd',
       type: Boolean,
@@ -93,6 +99,12 @@ module.exports = yo.extend({
     if (this.options.details){
      this._detailedHelp();
     }
+    if (this.options['telemetry-off']) {
+      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.telemetryLevel.basic);
+      console.log(`Collection of usage data has been turned off for ${telemetryObject.groupName}`);
+      process.exit();
+    }
+
     let message = `Welcome to the ${chalk.bold.green('Office Add-in')} generator, by ${chalk.bold.green('@OfficeDev')}! Let\'s create a project together!`;
     this.log(yosay(message));
     this.project = {};
@@ -101,30 +113,12 @@ module.exports = yo.extend({
   /* Prompt user for project options */
   prompting: async function () {
     try {
-      // const promptForTelemetry = telemetry.promptForTelemetry("generator-office");
-      let askForSendTelemetry = [
-        {
-          name: 'telemetryOptIn',
-          message: 'Do you want to send telemetry data to help improve Yo Office',
-          type: 'list',
-          default: 'Yes',
-          choices: ["Yes", "No"],
-          when: telemetryJsonData.promptForTelemetry("generator-office", telemetryJsonFilePath)
-        }
-      ];
 
-      let answerForSendTelemetry = await this.prompt(askForSendTelemetry);
-      if (answerForSendTelemetry.telemetryOptIn) {
-        const jsonData = telemetryJsonData.readTelemetryJsonData(telemetryJsonFilePath);
-        jsonData.telemetryInstances[telemetryObject.groupName] = { telemetryEnabled: true };
-        telemetryJsonData.writeTelemetryJsonData(jsonData, telemetryJsonFilePath);
+      if (telemetryJsonData.promptForTelemetry("generator-office", telemetryJsonFilePath)) {
+        console.log(telemetryObject.promptQuestion);
+      } else {
+        telemetryObject.telemetryLevel = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
       }
-
-
-      if (answerForSendTelemetry.telemetryOptIn == "No") {
-        telemetryObject.telemetryEnabled = false;
-      }
-      addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
 
       let jsonData = new projectsJsonData(this.templatePath());
       let isManifestProject = false;
@@ -202,6 +196,8 @@ module.exports = yo.extend({
       let answerForHost = await this.prompt(askForHost);
       let endForHost = (new Date()).getTime();
       let durationForHost = (endForHost - startForHost) / 1000;
+
+      addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
 
       /* Configure project properties based on user input or answers to prompts */
       this._configureProject(answerForProjectType, answerForScriptType, answerForHost, answerForName, isManifestProject, isExcelFunctionsProject);
