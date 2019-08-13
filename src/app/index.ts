@@ -16,16 +16,15 @@ import { modifyManifestFile } from 'office-addin-manifest';
 import * as path from "path";
 import * as os from "os";
 
-import * as telemetry from "./../../node_modules/office-addin-telemetry/lib/officeAddinTelemetry";
-import * as telemetryJsonData from "./../../node_modules/office-addin-telemetry/lib/telemetryJsonData";
-const telemetryObject: telemetry.ITelemetryObject = {
+import * as telemetry from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/officeAddinTelemetry";
+import * as telemetryJsonData from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/telemetryJsonData";
+const telemetryObject: telemetry.ITelemetryOptions = {
   groupName: "generator-office",
-  telemetryJsonFilePath: undefined,
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
   promptQuestion: `Yo Office collects diagnostic and usage data to help understand and improve your user experience.  See details at https://aka.ms/yoofficetelemetry.  If you would like to turn telemetry collection off, run ${chalk.bold.green('yo office --telemetry-off')}\n\n`,
-  telemetryLevel: telemetry.telemetryLevel.verbose,
+  telemetryEnabled: telemetry.telemetryEnabled.on,
   telemetryType: telemetry.telemetryType.applicationinsights,
   testData: false
 }
@@ -100,7 +99,7 @@ module.exports = yo.extend({
      this._detailedHelp();
     }
     if (this.options['telemetry-off']) {
-      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.telemetryLevel.basic);
+      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.telemetryEnabled.off);
       console.log(`Collection of usage data has been turned off for ${telemetryObject.groupName}`);
       process.exit();
     }
@@ -114,10 +113,10 @@ module.exports = yo.extend({
   prompting: async function () {
     try {
 
-      if (telemetryJsonData.promptForTelemetry("generator-office", telemetryJsonFilePath)) {
+      if (telemetryJsonData.needToPromptForTelemetry("generator-office")) {
         console.log(telemetryObject.promptQuestion);
       } else {
-        telemetryObject.telemetryLevel = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
+        telemetryObject.telemetryEnabled = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
       }
 
       let jsonData = new projectsJsonData(this.templatePath());
@@ -204,11 +203,6 @@ module.exports = yo.extend({
       //throw new Error("this error contains a file path: (C://Users//t-juflor//AppData//Roaming//npm//node_modules//balanced-match//index.js)");
       const noElapsedTime = 0;
       var projectInfo = {};
-      addInTelemetry.addTelemetry(projectInfo, "Name", this.project.name, durationForName);
-      addInTelemetry.addTelemetry(projectInfo, "Host", this.project.host, durationForHost);
-      addInTelemetry.addTelemetry(projectInfo, "ScriptType", this.project.scriptType, noElapsedTime);
-      addInTelemetry.addTelemetry(projectInfo, "IsManifestOnly", this.project.isManifestOnly.toString(), noElapsedTime);
-      addInTelemetry.addTelemetry(projectInfo, "ProjectType", this.project.projectType, durationForProjectType);
       addInTelemetry.reportEvent("generatorOfficeProjectInfo",projectInfo);
       /* Generate Insights logging */
     } catch (err) {
@@ -289,11 +283,6 @@ module.exports = yo.extend({
 
       let duration = this.project.duration;
       var AppData = {};
-      addInTelemetry.addTelemetry(AppData, "AppID",this.project.projectId);
-      addInTelemetry.addTelemetry(AppData, "Host", this.project.host);
-      addInTelemetry.addTelemetry(AppData, "isTypeScript", (this.project.scriptType === typescript));
-      addInTelemetry.addTelemetry(AppData, "ProjectType", this.project.projectType);
-      addInTelemetry.addTelemetry(AppData, "totalTimeTaken", duration);
       addInTelemetry.reportEvent("generatorOfficeProjectInfo",AppData);
       //insight.trackEvent('App_Data', { AppID: this.project.projectId, Host: this.project.host, ProjectType: this.project.projectType, isTypeScript: (this.project.scriptType === typescript).toString() }, { duration });
     }
