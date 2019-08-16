@@ -23,7 +23,7 @@ const telemetryObject: telemetry.ITelemetryOptions = {
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
-  promptQuestion: `Office Add-in CLI tools collect anonymized usage data which is sent to Microsoft to help improve our product. Please read our privacy statement and telemetry details at ${chalk.blue('https://aka.ms/OfficeAddInCLIPrivacy')}. ​To disable data collection, choose Exit and run ${chalk.green('“npx office-addin-telemetry off”')}.\n\n`,
+  promptQuestion: `Office Add-in CLI tools collect anonymized usage data which is sent to Microsoft to help improve our product. Please read our privacy notice at ${chalk.blue('https://aka.ms/OfficeAddInCLIPrivacy')}. ​To disable data collection, choose Exit and run ${chalk.green('“npx office-addin-telemetry off”')}.\n\n`,
   telemetryLevel: telemetry.TelemetryLevel.off,
   telemetryType: telemetry.telemetryType.applicationinsights,
   testData: false
