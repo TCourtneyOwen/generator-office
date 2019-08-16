@@ -3,7 +3,6 @@
  * See LICENSE in the project root for license information.
  */
 import * as _ from 'lodash';
-import * as appInsights from 'applicationinsights';
 import * as chalk from 'chalk';
 import * as childProcess from "child_process";
 import * as uuid from 'uuid/v4';
@@ -19,19 +18,17 @@ import * as os from "os";
 import * as telemetry from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/officeAddinTelemetry";
 import * as telemetryJsonData from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/telemetryJsonData";
 const telemetryObject: telemetry.ITelemetryOptions = {
-  groupName: "generator-office",
+  groupName: "office-addin-telemetry",
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
-  promptQuestion: `Yo Office collects diagnostic and usage data to help understand and improve your user experience.  See details at https://aka.ms/yoofficetelemetry.  If you would like to turn telemetry collection off, run ${chalk.bold.green('yo office --telemetry-off')}\n\n`,
-  telemetryEnabled: telemetry.telemetryEnabled.on,
+  promptQuestion: `Office Add-in CLI tools collect anonymized usage data which is sent to Microsoft to help improve our product. Please read our privacy statement and telemetry details at ${chalk.blue('https://aka.ms/OfficeAddInCLIPrivacy')}. ​To disable data collection, choose Exit and run ${chalk.green('“npx office-addin-telemetry off”')}.\n\n`,
+  telemetryLevel: telemetry.TelemetryLevel.off,
   telemetryType: telemetry.telemetryType.applicationinsights,
   testData: false
 }
 let addInTelemetry : telemetry.OfficeAddinTelemetry;
-const telemetryJsonFilePath: string = path.join(os.homedir(), "/officeAddinTelemetry.json");
 
-let insight = appInsights.getClient('1ced6a2f-b3b2-4da5-a1b8-746512fbc840');
 const childProcessExec = promisify(childProcess.exec);
 const excelCustomFunctions = `excel-functions`;
 const manifest = 'manifest';
@@ -99,8 +96,8 @@ module.exports = yo.extend({
      this._detailedHelp();
     }
     if (this.options['telemetry-off']) {
-      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.telemetryEnabled.off);
-      console.log(`Collection of usage data has been turned off for ${telemetryObject.groupName}`);
+      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.TelemetryLevel.off);
+      console.log(`\nOffice Add-in CLI telemetry has been turned off`);
       process.exit();
     }
 
@@ -112,11 +109,25 @@ module.exports = yo.extend({
   /* Prompt user for project options */
   prompting: async function () {
     try {
-
-      if (telemetryJsonData.needToPromptForTelemetry("generator-office")) {
-        console.log(telemetryObject.promptQuestion);
+      let promptForTelemetry = [
+        {
+          name: 'telemetryPromptAnswer',
+          message: telemetryObject.promptQuestion,
+          type: 'list',
+          default: 'Continue',
+          choices: ['Continue', 'Exit'],
+          when: telemetryJsonData.needToPromptForTelemetry(telemetryObject.groupName)
+        }
+      ];
+      let answerForTelemetryPrompt = await this.prompt(promptForTelemetry);
+      if (answerForTelemetryPrompt.telemetryPromptAnswer) {
+        if (answerForTelemetryPrompt.telemetryPromptAnswer === 'Continue') {
+          telemetryObject.telemetryLevel = telemetry.TelemetryLevel.on;
+        } else {
+          process.exit();
+        }
       } else {
-        telemetryObject.telemetryEnabled = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
+        telemetryObject.telemetryLevel = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
       }
 
       let jsonData = new projectsJsonData(this.templatePath());
@@ -200,13 +211,16 @@ module.exports = yo.extend({
 
       /* Configure project properties based on user input or answers to prompts */
       this._configureProject(answerForProjectType, answerForScriptType, answerForHost, answerForName, isManifestProject, isExcelFunctionsProject);
-      //throw new Error("this error contains a file path: (C://Users//t-juflor//AppData//Roaming//npm//node_modules//balanced-match//index.js)");
-      const noElapsedTime = 0;
-      var projectInfo = {};
-      addInTelemetry.reportEvent("generatorOfficeProjectInfo",projectInfo);
-      /* Generate Insights logging */
+      var projectInfo = {
+        Host: [this.project.host, durationForHost],
+        ScriptType: [this.project.scriptType],
+        IsManifestOnly: [this.project.isManifestOnly.toString()],
+        ProjectType: [this.project.projectType, durationForProjectType],
+      };
+      // Send telemetry for project created
+      addInTelemetry.reportEvent(telemetryObject.projectName, projectInfo);
     } catch (err) {
-      addInTelemetry.reportError("sendProjectInfo",new Error('Prompting Error: ' + err));
+      addInTelemetry.reportError("promptingError",new Error('Prompting Error: ' + err));
     }
   },
 
@@ -280,11 +294,6 @@ module.exports = yo.extend({
       /* Check to to see if destination folder already exists. If so, we will exit and prompt the user to provide
       a different project name or output folder */
       this._exitYoOfficeIfProjectFolderExists();
-
-      let duration = this.project.duration;
-      var AppData = {};
-      addInTelemetry.reportEvent("generatorOfficeProjectInfo",AppData);
-      //insight.trackEvent('App_Data', { AppID: this.project.projectId, Host: this.project.host, ProjectType: this.project.projectType, isTypeScript: (this.project.scriptType === typescript).toString() }, { duration });
     }
     catch (err) {
       addInTelemetry.reportError("configurationError",new Error('Configuration Error: ' + err));
@@ -323,9 +332,7 @@ module.exports = yo.extend({
         }
       }
       catch (err) {
-        insight.trackException(new Error('File Copy Error: ' + err));
         addInTelemetry.reportError("fileCopyError",new Error("File Copy Error: " + err));
-
         return reject(err);
       }
     });
