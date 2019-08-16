@@ -17,8 +17,9 @@ import * as os from "os";
 
 import * as telemetry from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/officeAddinTelemetry";
 import * as telemetryJsonData from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/telemetryJsonData";
+import * as telemetryDefaults from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/defaults";
 const telemetryObject: telemetry.ITelemetryOptions = {
-  groupName: "office-addin-telemetry",
+  groupName: telemetryDefaults.groupName,
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
