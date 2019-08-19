@@ -15,20 +15,20 @@ import { modifyManifestFile } from 'office-addin-manifest';
 import * as path from "path";
 import * as os from "os";
 
-import * as telemetry from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/officeAddinTelemetry";
-import * as telemetryJsonData from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/telemetryJsonData";
-import * as telemetryDefaults from "./../../../Office-Addin-Scripts/packages/office-addin-telemetry/lib/defaults";
-const telemetryObject: telemetry.ITelemetryOptions = {
+import * as telemetry from "./../../../Office-Addin-Scripts/packages/office-addin-usage-data/lib/officeAddinUsage-Data";
+import * as telemetryJsonData from "./../../../Office-Addin-Scripts/packages/office-addin-usage-data/lib/usageDataJsonData";
+import * as telemetryDefaults from "./../../../Office-Addin-Scripts/packages/office-addin-usage-data/lib/defaults";
+const telemetryObject: telemetry.IUsageDataOptions = {
   groupName: telemetryDefaults.groupName,
   projectName: "generator-office",
   raisePrompt: false,
   instrumentationKey: "de0d9e7c-1f46-4552-bc21-4e43e489a015",
-  promptQuestion: `Office Add-in CLI tools collect anonymized usage data which is sent to Microsoft to help improve our product. Please read our privacy notice at ${chalk.blue('https://aka.ms/OfficeAddInCLIPrivacy')}. ​To disable data collection, choose Exit and run ${chalk.green('“npx office-addin-telemetry off”')}.\n\n`,
-  telemetryLevel: telemetry.TelemetryLevel.off,
-  telemetryType: telemetry.telemetryType.applicationinsights,
+  promptQuestion: `Office Add-in CLI tools collect anonymized usage data which is sent to Microsoft to help improve our product. Please read our privacy notice at ${chalk.blue('https://aka.ms/OfficeAddInCLIPrivacy')}. ​To disable data collection, choose Exit and run ${chalk.green('“npx office-addin-usage-data off”')}.\n\n`,
+  usageDataLevel: telemetry.UsageDataLevel.off,
+  usageDataType: telemetry.UsageDataType.applicationinsights,
   testData: false
 }
-let addInTelemetry : telemetry.OfficeAddinTelemetry;
+let addInTelemetry : telemetry.OfficeAddinUsageData;
 
 const childProcessExec = promisify(childProcess.exec);
 const excelCustomFunctions = `excel-functions`;
@@ -97,7 +97,7 @@ module.exports = yo.extend({
      this._detailedHelp();
     }
     if (this.options['telemetry-off']) {
-      telemetryJsonData.writeTelemetryJsonData(telemetryObject.groupName, telemetry.TelemetryLevel.off);
+      telemetryJsonData.writeUsageDataJsonData(telemetryObject.groupName, telemetry.UsageDataLevel.off);
       console.log(`\nOffice Add-in CLI telemetry has been turned off`);
       process.exit();
     }
@@ -117,18 +117,18 @@ module.exports = yo.extend({
           type: 'list',
           default: 'Continue',
           choices: ['Continue', 'Exit'],
-          when: telemetryJsonData.needToPromptForTelemetry(telemetryObject.groupName)
+          when: telemetryJsonData.needToPromptForUsageData(telemetryObject.groupName)
         }
       ];
       let answerForTelemetryPrompt = await this.prompt(promptForTelemetry);
       if (answerForTelemetryPrompt.telemetryPromptAnswer) {
         if (answerForTelemetryPrompt.telemetryPromptAnswer === 'Continue') {
-          telemetryObject.telemetryLevel = telemetry.TelemetryLevel.on;
+          telemetryObject.usageDataLevel = telemetry.UsageDataLevel.on;
         } else {
           process.exit();
         }
       } else {
-        telemetryObject.telemetryLevel = telemetryJsonData.readTelemetryLevel(telemetryObject.groupName);
+        telemetryObject.usageDataLevel = telemetryJsonData.readUsageDataLevel(telemetryObject.groupName);
       }
 
       let jsonData = new projectsJsonData(this.templatePath());
@@ -208,7 +208,7 @@ module.exports = yo.extend({
       let endForHost = (new Date()).getTime();
       let durationForHost = (endForHost - startForHost) / 1000;
 
-      addInTelemetry = new telemetry.OfficeAddinTelemetry(telemetryObject);
+      addInTelemetry = new telemetry.OfficeAddinUsageData(telemetryObject);
 
       /* Configure project properties based on user input or answers to prompts */
       this._configureProject(answerForProjectType, answerForScriptType, answerForHost, answerForName, isManifestProject, isExcelFunctionsProject);
