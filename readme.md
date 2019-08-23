@@ -181,6 +181,12 @@ $ yo office
 
 At this point, `yo office` will be running with your custom built `office-generator` changes.
 
+## Data usage notice
+
+Yo Office collects anonymized usage data and sends it to Microsoft. This allows us to understand how Yo Office is used and how to improve it.
+
+For more details on what we collect and how to turn it off, see our [Data usage notice](https://github.com/akrantz/Office-Addin-Scripts/blob/telemetry-readme/usageData.md)
+
 ---
 
 Copyright (c) 2017 Microsoft Corporation. All rights reserved.
