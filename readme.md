@@ -181,7 +181,7 @@ $ yo office
 
 At this point, `yo office` will be running with your custom built `office-generator` changes.
 
-## Data usage notice
+## Data usage
 
 Yo Office collects anonymized usage data and sends it to Microsoft. This allows us to understand how Yo Office is used and how to improve it.
 
